@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, List, Type, Loader2, X } from "lucide-react";
-import Link from "next/link";
+import { List, Type, Loader2, X } from "lucide-react";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 
