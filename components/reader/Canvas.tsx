@@ -44,7 +44,6 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const motionRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const flipBookRef = useRef<any>(null);
-  const touchStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
   
   const [currentPage, setCurrentPage] = useState(0);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -220,7 +219,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
   return (
     <div className={clsx(
-      "w-full h-[100dvh] overflow-hidden flex flex-col font-serif transition-colors duration-500",
+      "w-full h-[100dvh] overflow-hidden overscroll-none overscroll-x-none touch-pan-y flex flex-col font-serif transition-colors duration-500",
       theme === "day" && "bg-[#f8f9fa]",
       theme === "sepia" && "bg-[#f4ecd8]",
       theme === "dark" && "bg-black" 
@@ -311,38 +310,15 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       {/* Book Container */}
       <div 
         className="w-full h-full relative flex items-center justify-center"
-        onTouchStart={(e) => {
-          touchStartRef.current = {
-            x: e.touches[0].clientX,
-            y: e.touches[0].clientY,
-            time: Date.now()
-          };
-        }}
-        onTouchEnd={(e) => {
-          if (!touchStartRef.current) return;
-          
-          const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
-          const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
-          const timeElapsed = Date.now() - touchStartRef.current.time;
-          
-          // Ignore if interacting with UI
+        onClickCapture={(e) => {
+          // If clicking UI buttons, let them work naturally
           if ((e.target as HTMLElement).closest('.z-50')) return;
 
-          if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) && timeElapsed < 600) {
-            // Horizontal Swipe
-            if (dx < 0) {
-              // Swipe Left (Next)
-              handleNextPage();
-            } else {
-              // Swipe Right (Prev)
-              handlePrevPage();
-            }
-          } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10 && timeElapsed < 300) {
-            // Tap
-            setShowUI(!showUI);
-          }
+          // Stop propagation so react-pageflip's native click handler doesn't trigger
+          e.stopPropagation();
           
-          touchStartRef.current = null;
+          // ANY tap on the book toggles the UI
+          setShowUI(!showUI);
         }}
       >
         
@@ -392,7 +368,6 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       showCover={false}
                       startPage={currentPage}
                       mobileScrollSupport={true}
-                      useMouseEvents={false}
                       disableFlipByClick={true}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
