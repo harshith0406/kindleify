@@ -36,7 +36,6 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [fontFamily, setFontFamily] = useState<"serif" | "sans" | "opendyslexic">("serif");
   
   const [showUI, setShowUI] = useState(true);
-  const [isBookmarked, setIsBookmarked] = useState(false);
   
   const [isMobile, setIsMobile] = useState(true);
   const [mounted, setMounted] = useState(false);

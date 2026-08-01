@@ -7,7 +7,15 @@ export async function POST(request: Request) {
     if (email === 'yash@gmail.com' && password === 'toxic') {
       const response = NextResponse.json({ success: true });
       
-      const cookieOptions: any = {
+      const cookieOptions: {
+        name: string;
+        value: string;
+        httpOnly: boolean;
+        secure: boolean;
+        sameSite: 'lax';
+        path: string;
+        maxAge?: number;
+      } = {
         name: 'auth_session',
         value: 'authenticated',
         httpOnly: true,
