@@ -89,7 +89,8 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       chapterTitle: chapters[chapterIndex].title || `Chapter ${chapterIndex + 1}`,
       totalChapters: chapters.length,
       currentChapterIndex: chapterIndex,
-      toc: chapters.map((c, i) => c.title || `Chapter ${i + 1}`),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      toc: chapters.map((c: any, i: number) => c.title || `Chapter ${i + 1}`),
       content: contentNodes
     };
 
