@@ -258,18 +258,31 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       <div 
         className="w-full h-full relative flex items-center justify-center"
         onClickCapture={(e) => {
+          // If clicking UI buttons, let them work naturally
+          if ((e.target as HTMLElement).closest('.z-50')) return;
+
           const isRightEdge = e.clientX > window.innerWidth * 0.7;
           const isLeftEdge = e.clientX < window.innerWidth * 0.3;
           
-          if (isRightEdge && currentPage >= maxPages - (isMobile ? 1 : 2)) {
-            if (currentChapterIndex < totalChapters - 1) {
-              changeChapter(currentChapterIndex + 1);
+          if (isRightEdge) {
+            e.stopPropagation();
+            if (currentPage >= maxPages - (isMobile ? 1 : 2)) {
+              if (currentChapterIndex < totalChapters - 1) {
+                changeChapter(currentChapterIndex + 1);
+              }
+            } else {
+              handleNextPage();
             }
-          } else if (isLeftEdge && currentPage === 0) {
-            if (currentChapterIndex > 0) {
-              changeChapter(currentChapterIndex - 1);
+          } else if (isLeftEdge) {
+            e.stopPropagation();
+            if (currentPage === 0) {
+              if (currentChapterIndex > 0) {
+                changeChapter(currentChapterIndex - 1);
+              }
+            } else {
+              handlePrevPage();
             }
-          } else if (!isRightEdge && !isLeftEdge) {
+          } else {
             setShowUI(!showUI);
           }
         }}
@@ -320,7 +333,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       maxShadowOpacity={0.3}
                       showCover={false}
                       startPage={currentPage}
-                      mobileScrollSupport={false} // Disable to let our tap zones handle it cleanly
+                      mobileScrollSupport={true}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
                         setCurrentPage(e.data);
