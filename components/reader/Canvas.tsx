@@ -466,7 +466,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
               
               {/* Scrub bar */}
               <div className="flex items-center gap-4 px-2">
-                <span className="text-[10px] font-semibold opacity-50 uppercase tracking-wider">1</span>
+                <span className="text-[10px] font-semibold opacity-50 uppercase tracking-wider w-4 text-right">{currentPage + 1}</span>
                 <div className="flex-1 h-1.5 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
                    <div 
                      className="absolute left-0 top-0 bottom-0 bg-black dark:bg-white rounded-full transition-all duration-300"
