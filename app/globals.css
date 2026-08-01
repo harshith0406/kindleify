@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Day mode default (Muted Paper) */
+    --theme-bg: #fbfaf7;
+    --theme-text: #1c1b18;
+    --theme-accent: #e2dfd3;
+    --theme-border: #dcd9ce;
+    
+    --radius: 0.75rem;
+  }
+
+  .theme-sepia {
+    /* Sepia Mode (Aged Paper) */
+    --theme-bg: #f4ecd8;
+    --theme-text: #5f4b32;
+    --theme-accent: #e6dfc8;
+    --theme-border: #d7cdb5;
+  }
+
+  .theme-dark {
+    /* Bedside Dark Mode */
+    --theme-bg: #161616;
+    --theme-text: #b5b5b5;
+    --theme-accent: #262626;
+    --theme-border: #333333;
+  }
+}
+
+@layer base {
+  body {
+    background-color: var(--theme-bg);
+    color: var(--theme-text);
+    /* 300ms transition to avoid white flashes as per BRD */
+    transition: background-color 300ms ease, color 300ms ease; 
+  }
+}
+
+/* Reader specific utilities */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
