@@ -368,6 +368,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       showCover={false}
                       startPage={currentPage}
                       mobileScrollSupport={true}
+                      disableFlipByClick={true}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
                         setCurrentPage(e.data);
