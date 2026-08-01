@@ -36,6 +36,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [fontFamily, setFontFamily] = useState<"serif" | "sans" | "opendyslexic">("serif");
   
   const [showUI, setShowUI] = useState(true);
+  const [showTOC, setShowTOC] = useState(false);
   
   const [isMobile, setIsMobile] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -55,6 +56,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [totalChapters, setTotalChapters] = useState(1);
   const [isLoadingChapter, setIsLoadingChapter] = useState(bookId ? true : false);
   const [bookTitle, setBookTitle] = useState("Alice's Adventures...");
+  const [tableOfContents, setTableOfContents] = useState<string[]>([]);
   const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
 
   // Load progress from localStorage
@@ -85,7 +87,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
           setChapterContent(data.content);
           setTotalChapters(data.totalChapters);
           setBookTitle(data.title);
-          // Removed setCurrentPage(0) so we don't erase the loaded progress!
+          if (data.toc) setTableOfContents(data.toc);
         }
       } catch (e) {
         console.error(e);
@@ -225,6 +227,58 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       theme === "dark" && "bg-black" 
     )}>
       
+      {/* Table of Contents Drawer Overlay */}
+      <AnimatePresence>
+        {showTOC && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTOC(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+            />
+            <motion.div
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="absolute top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl z-[70] shadow-2xl flex flex-col font-sans border-r border-black/5 dark:border-white/10"
+            >
+              <div className="p-6 border-b border-black/5 dark:border-white/10 flex items-center justify-between mt-[env(safe-area-inset-top,0px)]">
+                <h2 className="text-xl font-bold text-black dark:text-white">Table of Contents</h2>
+                <button onClick={() => setShowTOC(false)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
+                  <X className="w-5 h-5 text-black dark:text-white" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-4 pb-[env(safe-area-inset-bottom,20px)]">
+                {tableOfContents.map((title, i) => (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (i !== currentChapterIndex) changeChapter(i);
+                      setShowTOC(false);
+                      setShowUI(false);
+                    }}
+                    className={clsx(
+                      "w-full text-left p-4 rounded-xl transition-all mb-2 flex items-center justify-between group",
+                      i === currentChapterIndex 
+                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold" 
+                        : "text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5"
+                    )}
+                  >
+                    <span className="truncate pr-4">{title}</span>
+                    {i === currentChapterIndex && (
+                      <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Mobile-First Premium iOS-style Header */}
       <AnimatePresence>
         {showUI && (
@@ -475,7 +529,10 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                   <button onClick={() => setFontSize(Math.min(28, fontSize + 2))} className="flex-1 py-2.5 text-lg font-medium hover:bg-white/50 dark:hover:bg-black/20 rounded-full transition-colors">A+</button>
                 </div>
 
-                <button className="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center hover:bg-black/10 transition-colors">
+                <button 
+                  onClick={() => setShowTOC(true)}
+                  className="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center hover:bg-black/10 transition-colors"
+                >
                   <List className="w-5 h-5" />
                 </button>
               </div>

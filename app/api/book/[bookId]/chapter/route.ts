@@ -89,6 +89,7 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       chapterTitle: chapters[chapterIndex].title || `Chapter ${chapterIndex + 1}`,
       totalChapters: chapters.length,
       currentChapterIndex: chapterIndex,
+      toc: chapters.map((c, i) => c.title || `Chapter ${i + 1}`),
       content: contentNodes
     };
 
