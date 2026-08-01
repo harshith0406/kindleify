@@ -34,7 +34,7 @@ export default function LoginPage() {
         setError(data.error || "invalid creds");
         setIsLoading(false);
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred");
       setIsLoading(false);
     }
@@ -123,7 +123,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center mt-8 text-sm text-slate-500">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-purple-600 font-medium hover:underline">
               Sign up
             </Link>
