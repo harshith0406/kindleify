@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bookmark, ChevronLeft, Search, List, Type, Loader2 } from "lucide-react";
+import { ChevronLeft, List, Type, Loader2, X } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
@@ -246,14 +246,11 @@ export default function Canvas({ bookId, content }: CanvasProps) {
             </div>
             
             <div className="flex items-center gap-1 text-black dark:text-white">
-              <button className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
-                <Search className="w-5 h-5" />
-              </button>
               <button 
-                onClick={() => setIsBookmarked(!isBookmarked)}
-                className={clsx("p-2 rounded-full transition-colors", isBookmarked ? "text-[#ff2d55]" : "hover:bg-black/5 dark:hover:bg-white/10")}
+                onClick={() => setShowUI(false)}
+                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
               >
-                <Bookmark className="w-5 h-5" fill={isBookmarked ? "currentColor" : "none"} />
+                <X className="w-6 h-6" />
               </button>
             </div>
           </motion.div>
@@ -325,6 +322,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       maxHeight={2000}
                       maxShadowOpacity={0.3}
                       showCover={false}
+                      startPage={currentPage}
                       mobileScrollSupport={false} // Disable to let our tap zones handle it cleanly
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {

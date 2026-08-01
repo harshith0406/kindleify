@@ -9,8 +9,13 @@ export default function Dashboard() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-zinc-300 p-6 md:p-12 font-sans selection:bg-purple-500/30">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-screen bg-[#000000] text-zinc-300 p-6 md:p-12 font-sans selection:bg-purple-500/30 relative overflow-hidden">
+      
+      {/* Dynamic Background Gradients */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[120px] mix-blend-screen pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-[30rem] h-[30rem] bg-blue-600/10 rounded-full blur-[150px] mix-blend-screen pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto space-y-12 relative z-10">
         
         {/* Header */}
         <header className="flex items-center justify-between pb-6 border-b border-white/10">
@@ -21,7 +26,9 @@ export default function Dashboard() {
             Kindleify
           </Link>
           <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-500 to-blue-500 border-2 border-[#0a0a0a] shadow-sm"></div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-500 p-[2px] shadow-lg shadow-purple-500/20">
+              <div className="w-full h-full bg-black rounded-full border-2 border-transparent"></div>
+            </div>
           </div>
         </header>
 
@@ -37,32 +44,48 @@ export default function Dashboard() {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"
+            transition={{ duration: 0.6, delay: 0.1, type: "spring" }}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8"
           >
             {/* The Silent Patient Book Card */}
             <div 
               onClick={() => router.push("/reader/the-silent-patient")}
               className="group cursor-pointer flex flex-col gap-3"
             >
-              <div className="relative aspect-[2/3] w-full rounded-md shadow-lg overflow-hidden border border-white/10 bg-[#161616] transition-transform duration-300 group-hover:-translate-y-2 group-hover:shadow-2xl group-hover:shadow-purple-500/20">
-                {/* Fallback Cover Design */}
-                <div className="absolute inset-0 bg-gradient-to-br from-zinc-800 to-zinc-950 flex flex-col p-4 justify-between">
-                  <div className="w-full h-1 bg-gradient-to-r from-red-500 to-red-800 opacity-50 absolute top-0 left-0" />
-                  <div className="text-right w-full pt-4 pr-2">
-                    <span className="text-[10px] font-bold tracking-widest text-white/40 uppercase rotate-90 origin-right inline-block">Bestseller</span>
+              <div className="relative aspect-[2/3] w-full rounded-xl shadow-2xl overflow-hidden border border-white/5 bg-[#0f0f11] transition-all duration-500 group-hover:-translate-y-3 group-hover:shadow-[0_20px_50px_rgba(168,85,247,0.25)] group-hover:border-purple-500/30">
+                {/* Premium Fallback Cover Design */}
+                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-zinc-800 via-zinc-900 to-black flex flex-col p-5 justify-between">
+                  <div className="w-full h-1.5 bg-gradient-to-r from-orange-500 via-red-500 to-purple-600 opacity-80 absolute top-0 left-0" />
+                  
+                  {/* Subtle noise texture */}
+                  <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+                  <div className="text-right w-full pt-4 pr-1 z-10">
+                    <span className="text-[10px] font-bold tracking-[0.3em] text-white/30 uppercase rotate-90 origin-right inline-block">Bestseller</span>
                   </div>
-                  <div>
-                    <h3 className="text-white font-serif font-bold text-xl leading-tight">The Silent Patient</h3>
-                    <p className="text-zinc-400 font-sans text-xs mt-2 uppercase tracking-wider">Alex Michaelides</p>
+                  <div className="z-10">
+                    <h3 className="text-white font-serif font-bold text-2xl leading-none tracking-tight">The Silent Patient</h3>
+                    <p className="text-zinc-400 font-sans text-xs mt-3 uppercase tracking-widest font-semibold">Alex Michaelides</p>
+                  </div>
+                </div>
+                
+                {/* Glassmorphic Progress Overlay (appears on hover) */}
+                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                  <div className="bg-white/10 border border-white/20 text-white text-sm font-semibold py-2 px-6 rounded-full backdrop-blur-md shadow-xl transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+                    Continue Reading
                   </div>
                 </div>
               </div>
-              <div className="px-1">
-                <h3 className="text-white font-medium text-sm truncate group-hover:text-purple-400 transition-colors">The Silent Patient</h3>
-                <p className="text-zinc-500 text-xs">Alex Michaelides</p>
+              <div className="px-2 mt-1">
+                <div className="flex justify-between items-center mb-1">
+                  <h3 className="text-white font-semibold text-sm truncate group-hover:text-purple-400 transition-colors">The Silent Patient</h3>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-zinc-500 text-xs font-medium tracking-wide">Alex Michaelides</p>
+                  <span className="text-[10px] font-bold text-purple-400/80 bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">NEW</span>
+                </div>
               </div>
             </div>
 

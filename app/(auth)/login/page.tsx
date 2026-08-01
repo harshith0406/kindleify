@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +25,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password, keepLoggedIn })
       });
 
       if (res.ok) {
@@ -99,8 +100,13 @@ export default function LoginPage() {
             <div className="flex items-center justify-between text-sm pt-2">
               <label className="flex items-center gap-2 cursor-pointer group">
                 <div className="w-4 h-4 rounded border border-slate-300 flex items-center justify-center bg-white group-hover:border-purple-500 transition-colors">
-                  {/* Custom checkbox checked state would go here */}
-                  <div className="w-2.5 h-2.5 bg-purple-500 rounded-sm opacity-0" />
+                  <input 
+                    type="checkbox" 
+                    checked={keepLoggedIn}
+                    onChange={(e) => setKeepLoggedIn(e.target.checked)}
+                    className="hidden" 
+                  />
+                  <div className={`w-2.5 h-2.5 bg-purple-500 rounded-sm transition-opacity ${keepLoggedIn ? 'opacity-100' : 'opacity-0'}`} />
                 </div>
                 <span className="text-slate-600 select-none">Keep me logged in</span>
               </label>

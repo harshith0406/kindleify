@@ -17,6 +17,14 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
+    const cacheDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'public');
+    const cachePath = path.join(cacheDir, `kindleify-cache-${bookId}-${chapterIndex}.json`);
+
+    if (fs.existsSync(cachePath)) {
+      const cachedData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
+      return NextResponse.json(cachedData);
+    }
+
     const epub = await EPub.createAsync(bookPath);
     
     const chapters = epub.flow;
@@ -76,13 +84,21 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       });
     }
 
-    return NextResponse.json({
+    const responseData = {
       title: epub.metadata.title,
       chapterTitle: chapters[chapterIndex].title || `Chapter ${chapterIndex + 1}`,
       totalChapters: chapters.length,
       currentChapterIndex: chapterIndex,
       content: contentNodes
-    });
+    };
+
+    try {
+      fs.writeFileSync(cachePath, JSON.stringify(responseData));
+    } catch (cacheErr) {
+      console.warn("Failed to write to cache:", cacheErr);
+    }
+
+    return NextResponse.json(responseData);
 
   } catch (error: unknown) {
     console.error("EPUB Parse Error:", error);

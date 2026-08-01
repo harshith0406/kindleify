@@ -5,6 +5,7 @@ import clsx from "clsx";
 export const metadata: Metadata = {
   title: "Kindleify | Reflowable PDF Reader",
   description: "A high-utility, web-based e-reader platform for PDF files.",
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",

@@ -2,20 +2,25 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, keepLoggedIn } = await request.json();
 
     if (email === 'yash@gmail.com' && password === 'toxic') {
       const response = NextResponse.json({ success: true });
       
-      response.cookies.set({
+      const cookieOptions: any = {
         name: 'auth_session',
         value: 'authenticated',
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7 // 1 week
-      });
+        path: '/'
+      };
+
+      if (keepLoggedIn) {
+        cookieOptions.maxAge = 60 * 60 * 24 * 30; // 30 days
+      }
+
+      response.cookies.set(cookieOptions);
       
       return response;
     }
