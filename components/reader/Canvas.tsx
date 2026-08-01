@@ -57,23 +57,20 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [bookTitle, setBookTitle] = useState("Alice's Adventures...");
   const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
 
-  // Load progress from API
+  // Load progress from localStorage
   useEffect(() => {
     if (!bookId) return;
-    const fetchBookmark = async () => {
-      try {
-        const res = await fetch(`/api/bookmark?bookId=${bookId}`);
-        if (res.ok) {
-          const { chapter, page } = await res.json();
-          if (typeof chapter === 'number') setCurrentChapterIndex(chapter);
-          if (typeof page === 'number') setCurrentPage(page);
-        }
-      } catch (e) {
-        console.error("Failed to load progress", e);
+    try {
+      const saved = localStorage.getItem(`bookmark-${bookId}`);
+      if (saved) {
+        const { chapter, page } = JSON.parse(saved);
+        if (typeof chapter === 'number') setCurrentChapterIndex(chapter);
+        if (typeof page === 'number') setCurrentPage(page);
       }
-      setHasLoadedProgress(true);
-    };
-    fetchBookmark();
+    } catch (e) {
+      console.error("Failed to load progress from localStorage", e);
+    }
+    setHasLoadedProgress(true);
   }, [bookId]);
 
   // Fetch Chapter
@@ -146,11 +143,12 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   }, [maxPages, currentPage]);
 
   const saveProgress = (newChapter: number, newPage: number) => {
-    fetch('/api/bookmark', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookId, chapter: newChapter, page: newPage })
-    }).catch(e => console.error('Failed to save bookmark', e));
+    if (!bookId) return;
+    try {
+      localStorage.setItem(`bookmark-${bookId}`, JSON.stringify({ chapter: newChapter, page: newPage }));
+    } catch (e) {
+      console.error('Failed to save bookmark to localStorage', e);
+    }
   };
 
   const changeChapter = (newIndex: number) => {
