@@ -43,23 +43,35 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
     
     let contentNodes: { id: number; type: string; text: string }[] = [];
     let idCounter = 1;
+    let lastNode: { id: number; type: string; text: string } | null = null;
 
     elements.forEach((el) => {
       // Filter out empty elements or pure structural divs
-      const text = el.textContent?.trim();
-      if (!text || text.length === 0) return;
+      const textRaw = el.textContent?.trim();
+      if (!textRaw || textRaw.length === 0) return;
       
       // If a div just contains a p, the p will be caught separately
       if (el.tagName.toLowerCase() === 'div' && el.querySelector('p')) return;
 
-      // Clean up text content (remove internal newlines/tabs from EPUB formatting)
-      const cleanText = text.replace(/\s+/g, ' ').trim();
-
-      contentNodes.push({
-        id: idCounter++,
-        type: el.tagName.toLowerCase(),
-        text: cleanText
-      });
+      // Use innerHTML to preserve italics and bold tags
+      const htmlContent = el.innerHTML || '';
+      
+      // Clean up the HTML (remove excessive whitespace)
+      const cleanHtml = htmlContent.replace(/\s+/g, ' ').trim();
+      
+      // Heuristic: If the last node doesn't end with sentence-ending punctuation,
+      // it's likely a fragmented sentence from pdftohtml, so stitch it!
+      if (lastNode && !lastNode.text.match(/[.?!…”"'](<\/[^>]+>)?$/)) {
+        lastNode.text += ' ' + cleanHtml;
+      } else {
+        const newNode = {
+          id: idCounter++,
+          type: el.tagName.toLowerCase(),
+          text: cleanHtml
+        };
+        contentNodes.push(newNode);
+        lastNode = newNode;
+      }
     });
 
     // If no nodes found, fallback to body text

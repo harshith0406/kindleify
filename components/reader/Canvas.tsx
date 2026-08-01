@@ -210,9 +210,8 @@ export default function Canvas({ bookId, content }: CanvasProps) {
             "mb-5 text-justify hyphen-auto",
             i === 0 && "first-letter:text-6xl first-letter:font-bold first-letter:float-left first-letter:mr-3 first-letter:mt-[-0.15em] first-letter:leading-none"
           )}
-        >
-          {node.text}
-        </p>
+          dangerouslySetInnerHTML={{ __html: node.text }}
+        />
       ))}
     </div>
   );
