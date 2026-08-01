@@ -36,6 +36,8 @@
     color: var(--theme-text);
     /* 300ms transition to avoid white flashes as per BRD */
     transition: background-color 300ms ease, color 300ms ease; 
+    overscroll-behavior-x: none;
+    overscroll-behavior-y: none;
   }
 }
 

@@ -133,15 +133,18 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     };
   }, [fontSize, fontFamily, chapterContent, isLoadingChapter]);
 
+  const hasJumpedToBookmark = useRef(false);
+
   // Jump to the saved page instantly when the book layout engine finishes calculating maxPages
   useEffect(() => {
-    if (maxPages > 0 && flipBookRef.current) {
+    if (maxPages > 0 && flipBookRef.current && !hasJumpedToBookmark.current) {
       const pageFlip = flipBookRef.current.pageFlip();
       if (pageFlip && currentPage > 0 && currentPage < maxPages) {
         pageFlip.turnToPage(currentPage);
+        hasJumpedToBookmark.current = true;
       }
     }
-  }, [maxPages, currentPage]);
+  }, [maxPages]);
 
   const saveProgress = (newChapter: number, newPage: number) => {
     if (!bookId) return;
