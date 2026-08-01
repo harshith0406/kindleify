@@ -8,7 +8,6 @@ import clsx from "clsx";
 import dynamic from "next/dynamic";
 
 // Dynamically import react-pageflip to avoid SSR crashes
-// @ts-expect-error - react-pageflip does not have TypeScript types available
 const HTMLFlipBook = dynamic(() => import("react-pageflip"), { ssr: false });
 
 type ParagraphNode = {
