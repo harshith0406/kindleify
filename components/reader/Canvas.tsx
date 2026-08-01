@@ -41,7 +41,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [mounted, setMounted] = useState(false);
   
   const parentRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
+  const motionRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const flipBookRef = useRef<any>(null);
   const touchStartRef = useRef<{ x: number, y: number, time: number } | null>(null);
