@@ -84,8 +84,8 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
       content: contentNodes
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("EPUB Parse Error:", error);
-    return NextResponse.json({ error: error.message || 'Failed to parse EPUB' }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || 'Failed to parse EPUB' }, { status: 500 });
   }
 }

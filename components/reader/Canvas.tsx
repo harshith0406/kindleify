@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Settings, Home, Bookmark, ChevronLeft, ChevronRight, Search, List, Type, Moon, Loader2 } from "lucide-react";
+import { Bookmark, ChevronLeft, Search, List, Type, Loader2 } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
 import dynamic from "next/dynamic";
 
 // Dynamically import react-pageflip to avoid SSR crashes
-// @ts-ignore
+// @ts-expect-error
 const HTMLFlipBook = dynamic(() => import("react-pageflip"), { ssr: false });
 
 type ParagraphNode = {
@@ -44,6 +44,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   
   const parentRef = useRef<HTMLDivElement>(null);
   const motionRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const flipBookRef = useRef<any>(null);
   
   const [currentPage, setCurrentPage] = useState(0);
@@ -98,7 +99,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       }
     };
     fetchChapter();
-  }, [bookId, currentChapterIndex]);
+  }, [bookId, currentChapterIndex, hasLoadedProgress]);
 
   // Measurement Engine
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
         pageFlip.turnToPage(currentPage);
       }
     }
-  }, [maxPages]);
+  }, [maxPages, currentPage]);
 
   const saveProgress = (newChapter: number, newPage: number) => {
     fetch('/api/bookmark', {
@@ -189,6 +190,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUI, currentPage, maxPages, currentChapterIndex, totalChapters, isMobile]);
 
   const pageWidth = isMobile ? containerWidth : containerWidth / 2;
@@ -324,6 +326,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       maxShadowOpacity={0.3}
                       showCover={false}
                       mobileScrollSupport={false} // Disable to let our tap zones handle it cleanly
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
                         setCurrentPage(e.data);
                         saveProgress(currentChapterIndex, e.data);

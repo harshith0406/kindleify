@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const filePath = getFilePath();
-    let data: any = {};
+    let data: Record<string, { chapter: number; page: number }> = {};
 
     if (fs.existsSync(filePath)) {
       data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
