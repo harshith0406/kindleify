@@ -220,8 +220,8 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
   return (
     <div className={clsx(
-      "fixed inset-0 w-full h-[100dvh] overflow-hidden transition-colors duration-500 select-none flex items-center justify-center font-sans",
-      theme === "day" && "bg-white",
+      "w-full h-[100dvh] overflow-hidden flex flex-col font-serif transition-colors duration-500",
+      theme === "day" && "bg-[#f8f9fa]",
       theme === "sepia" && "bg-[#f4ecd8]",
       theme === "dark" && "bg-black" 
     )}>
@@ -282,62 +282,44 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       <AnimatePresence>
         {showUI && (
           <motion.div 
-            initial={{ opacity: 0, y: -40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -40 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute top-0 inset-x-0 h-[env(safe-area-inset-top,0px)+64px] pt-[env(safe-area-inset-top,0px)] bg-white/80 dark:bg-[#1c1c1e]/90 backdrop-blur-xl flex items-center justify-between px-4 z-50 border-b border-black/5 dark:border-white/10 shadow-sm"
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="absolute top-0 left-0 right-0 z-50 pt-[env(safe-area-inset-top,20px)] bg-white/80 dark:bg-[#1c1c1e]/80 backdrop-blur-2xl border-b border-black/5 dark:border-white/10 shadow-sm"
           >
-            <div className="flex items-center gap-2">
-              <Link href="/dashboard" className="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
-                <ChevronLeft className="w-6 h-6" />
-              </Link>
-              <span className="font-semibold text-sm truncate max-w-[150px] md:max-w-[200px] text-black dark:text-white">{bookTitle}</span>
-            </div>
-            
-            <div className="flex items-center gap-1 text-black dark:text-white">
+            <div className="px-4 pb-4 flex items-center justify-between">
+              <div className="flex-1">
+                <h1 className="text-sm font-semibold text-black dark:text-white truncate pr-4">
+                  {bookTitle}
+                </h1>
+                <p className="text-xs text-black/50 dark:text-white/50 truncate">
+                  {tableOfContents[currentChapterIndex] || `Chapter ${currentChapterIndex + 1}`}
+                </p>
+              </div>
               <button 
-                onClick={() => setShowUI(false)}
-                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                onClick={() => window.location.href = '/dashboard'}
+                className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5 text-black dark:text-white" />
               </button>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Main Reflowable Reader Canvas */}
+      {/* Book Container */}
       <div 
         className="w-full h-full relative flex items-center justify-center"
         onClickCapture={(e) => {
           // If clicking UI buttons, let them work naturally
           if ((e.target as HTMLElement).closest('.z-50')) return;
 
-          const isRightEdge = e.clientX > window.innerWidth * 0.7;
-          const isLeftEdge = e.clientX < window.innerWidth * 0.3;
+          // Stop propagation so react-pageflip's native click handler doesn't trigger
+          e.stopPropagation();
           
-          if (isRightEdge) {
-            e.stopPropagation();
-            if (currentPage >= maxPages - (isMobile ? 1 : 2)) {
-              if (currentChapterIndex < totalChapters - 1) {
-                changeChapter(currentChapterIndex + 1);
-              }
-            } else {
-              handleNextPage();
-            }
-          } else if (isLeftEdge) {
-            e.stopPropagation();
-            if (currentPage === 0) {
-              if (currentChapterIndex > 0) {
-                changeChapter(currentChapterIndex - 1);
-              }
-            } else {
-              handlePrevPage();
-            }
-          } else {
-            setShowUI(!showUI);
-          }
+          // ANY tap on the book toggles the UI
+          setShowUI(!showUI);
         }}
       >
         
