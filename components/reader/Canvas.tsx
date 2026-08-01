@@ -313,6 +313,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                 {/* REACT-PAGEFLIP 3D ENGINE */}
                 <div className="relative w-full h-full z-10 pointer-events-none">
                   {maxPages > 0 && containerWidth > 0 && parentRef.current && (
+                    /* @ts-expect-error - react-pageflip types require all props, but we rely on defaults */
                     <HTMLFlipBook
                       key={`${maxPages}-${containerWidth}-${currentChapterIndex}`}
                       width={pageWidth}
