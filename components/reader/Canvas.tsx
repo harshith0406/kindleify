@@ -193,6 +193,33 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUI, currentPage, maxPages, currentChapterIndex, totalChapters, isMobile]);
 
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndHandler = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe) {
+      handleNextPage();
+    }
+    if (isRightSwipe) {
+      handlePrevPage();
+    }
+  };
+
   const pageWidth = isMobile ? containerWidth : containerWidth / 2;
 
   const pageStyles = {
@@ -222,7 +249,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
   return (
     <div className={clsx(
-      "w-full h-[100dvh] overflow-hidden overscroll-none overscroll-x-none touch-pan-y flex flex-col font-serif transition-colors duration-500",
+      "w-full h-[100dvh] overflow-hidden overscroll-none touch-none flex flex-col font-serif transition-colors duration-500",
       theme === "day" && "bg-[#f8f9fa]",
       theme === "sepia" && "bg-[#f4ecd8]",
       theme === "dark" && "bg-black" 
@@ -312,17 +339,15 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
       {/* Book Container */}
       <div 
-        className="w-full h-full relative flex items-center justify-center"
+        className="w-full h-full relative flex items-center justify-center touch-none"
         onClickCapture={(e) => {
-          // If clicking UI buttons, let them work naturally
           if ((e.target as HTMLElement).closest('.z-50')) return;
-
-          // Stop propagation so react-pageflip's native click handler doesn't trigger
           e.stopPropagation();
-          
-          // ANY tap on the book toggles the UI
           setShowUI(!showUI);
         }}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEndHandler}
       >
         
         <div className={clsx(
@@ -332,7 +357,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
           {/* Inner pages container */}
           <div 
             className={clsx(
-              "w-full max-w-6xl h-full overflow-hidden relative flex items-center justify-center",
+              "w-full max-w-6xl h-full overflow-hidden relative flex items-center justify-center pointer-events-none",
               !isMobile && "shadow-2xl rounded-sm",
               theme === "day" && "bg-white text-[#111]",
               theme === "sepia" && "bg-[#f4ecd8] text-[#5f4b32]",
@@ -370,7 +395,8 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       maxShadowOpacity={0.3}
                       showCover={false}
                       startPage={currentPage}
-                      mobileScrollSupport={true}
+                      mobileScrollSupport={false}
+                      useMouseEvents={false}
                       disableFlipByClick={true}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {

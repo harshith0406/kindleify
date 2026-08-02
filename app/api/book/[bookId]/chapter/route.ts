@@ -32,8 +32,15 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
   const bookId = decodeURIComponent(params.bookId);
 
   try {
-    const bookPathJson = path.join(process.cwd(), 'public', `${bookId}.json`);
+    let bookPathJson = path.join(process.cwd(), 'public', `${bookId}.json`);
     
+    // Fallback logic for old URL structures
+    if (!fs.existsSync(bookPathJson)) {
+      if (bookId.includes('The Kind Worth Killing')) {
+        bookPathJson = path.join(process.cwd(), 'public', 'The Kind Worth Killing.json');
+      }
+    }
+
     if (!fs.existsSync(bookPathJson)) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
