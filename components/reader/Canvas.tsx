@@ -197,27 +197,13 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUI, currentPage, maxPages, currentChapterIndex, totalChapters, isMobile]);
 
-  const [pointerStartX, setPointerStartX] = useState<number | null>(null);
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    if (e.isPrimary) {
-      setPointerStartX(e.clientX);
-    }
-  };
-
-  const onPointerUp = (e: React.PointerEvent) => {
-    if (!e.isPrimary || pointerStartX === null) return;
-    const distance = pointerStartX - e.clientX;
-    setPointerStartX(null);
-
-    if (distance > 50) {
-      handleNextPage();
-    } else if (distance < -50) {
-      handlePrevPage();
-    } else if (Math.abs(distance) < 10) {
-      setShowUI(!showUI);
-    }
-  };
+  useEffect(() => {
+    // Prevent iOS Safari swipe-to-go-back gesture globally without breaking TOC scrolling
+    document.body.style.overscrollBehaviorX = 'none';
+    return () => {
+      document.body.style.overscrollBehaviorX = 'auto';
+    };
+  }, []);
 
   const pageWidth = isMobile ? containerWidth : containerWidth / 2;
 
@@ -248,7 +234,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
   return (
     <div className={clsx(
-      "w-full h-[100dvh] overflow-hidden overscroll-none touch-none flex flex-col font-serif transition-colors duration-500",
+      "w-full h-[100dvh] overflow-hidden overscroll-none flex flex-col font-serif transition-colors duration-500",
       theme === "day" && "bg-[#f8f9fa]",
       theme === "sepia" && "bg-[#f4ecd8]",
       theme === "dark" && "bg-black" 
@@ -338,7 +324,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
       {/* Book Container */}
       <div 
-        className="w-full h-full relative flex items-center justify-center touch-none"
+        className="w-full h-full relative flex items-center justify-center"
       >
         
         <div className={clsx(
@@ -371,14 +357,14 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                 </div>
 
                 {/* REACT-PAGEFLIP 3D ENGINE */}
-                <div className="relative w-full h-full z-10 pointer-events-none">
-                  <div 
-                    className="absolute inset-0 z-40 touch-none pointer-events-auto"
-                    onPointerDown={onPointerDown}
-                    onPointerUp={onPointerUp}
-                    onPointerCancel={() => setPointerStartX(null)}
-                  />
-
+                <div 
+                  className="relative w-full h-full z-10 pointer-events-auto"
+                  onClick={(e) => {
+                    // Only toggle UI if clicking on the book itself, not its controls
+                    if ((e.target as HTMLElement).closest('button, a')) return;
+                    setShowUI(!showUI);
+                  }}
+                >
                   {maxPages > 0 && containerWidth > 0 && parentRef.current && (
                     /* @ts-expect-error - react-pageflip types require all props, but we rely on defaults */
                     <HTMLFlipBook
@@ -396,6 +382,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       mobileScrollSupport={true}
                       useMouseEvents={true}
                       disableFlipByClick={true}
+                      usePortrait={isMobile}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
                         setCurrentPage(e.data);
