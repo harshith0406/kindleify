@@ -4,10 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { List, Type, Loader2, X } from "lucide-react";
 import clsx from "clsx";
-import dynamic from "next/dynamic";
-
-// Dynamically import react-pageflip to avoid SSR crashes
-const HTMLFlipBook = dynamic(() => import("react-pageflip"), { ssr: false });
+import HTMLFlipBook from "react-pageflip";
 
 type ParagraphNode = {
   id: number;
@@ -193,30 +190,25 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUI, currentPage, maxPages, currentChapterIndex, totalChapters, isMobile]);
 
-  const [touchStart, setTouchStart] = useState<number | null>(null);
-  const [touchEnd, setTouchEnd] = useState<number | null>(null);
-  const minSwipeDistance = 50;
+  const [pointerStartX, setPointerStartX] = useState<number | null>(null);
 
-  const onTouchStart = (e: React.TouchEvent) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
-
-  const onTouchMove = (e: React.TouchEvent) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const onTouchEndHandler = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > minSwipeDistance;
-    const isRightSwipe = distance < -minSwipeDistance;
-    
-    if (isLeftSwipe) {
-      handleNextPage();
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.isPrimary) {
+      setPointerStartX(e.clientX);
     }
-    if (isRightSwipe) {
+  };
+
+  const onPointerUp = (e: React.PointerEvent) => {
+    if (!e.isPrimary || pointerStartX === null) return;
+    const distance = pointerStartX - e.clientX;
+    setPointerStartX(null);
+
+    if (distance > 50) {
+      handleNextPage();
+    } else if (distance < -50) {
       handlePrevPage();
+    } else if (Math.abs(distance) < 10) {
+      setShowUI(!showUI);
     }
   };
 
@@ -345,9 +337,6 @@ export default function Canvas({ bookId, content }: CanvasProps) {
           e.stopPropagation();
           setShowUI(!showUI);
         }}
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEndHandler}
       >
         
         <div className={clsx(
@@ -381,18 +370,11 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
                 {/* REACT-PAGEFLIP 3D ENGINE */}
                 <div className="relative w-full h-full z-10 pointer-events-none">
-                  {/* INVISIBLE SWIPE OVERLAY - intercepts all touches to do simple kindle-style swipes without triggering 3D page drag */}
                   <div 
                     className="absolute inset-0 z-40 touch-none pointer-events-auto"
-                    onTouchStart={onTouchStart}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={() => {
-                      onTouchEndHandler();
-                      // Clear touch state
-                      setTouchStart(null);
-                      setTouchEnd(null);
-                    }}
-                    onClick={() => setShowUI(!showUI)}
+                    onPointerDown={onPointerDown}
+                    onPointerUp={onPointerUp}
+                    onPointerCancel={() => setPointerStartX(null)}
                   />
 
                   {maxPages > 0 && containerWidth > 0 && parentRef.current && (
