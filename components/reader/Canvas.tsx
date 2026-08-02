@@ -163,20 +163,27 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     if (currentPage >= maxPages - pagesPerView) {
       if (currentChapterIndex < totalChapters - 1) {
         changeChapter(currentChapterIndex + 1);
-        return;
       }
+    } else {
+      flipBookRef.current?.pageFlip().flipNext();
+      const next = currentPage + pagesPerView;
+      setCurrentPage(next);
+      saveProgress(currentChapterIndex, next);
     }
-    flipBookRef.current?.pageFlip().flipNext();
   };
 
   const handlePrevPage = () => {
     if (currentPage === 0) {
       if (currentChapterIndex > 0) {
         changeChapter(currentChapterIndex - 1);
-        return;
       }
+    } else {
+      const pagesPerView = isMobile ? 1 : 2;
+      flipBookRef.current?.pageFlip().flipPrev();
+      const prev = Math.max(0, currentPage - pagesPerView);
+      setCurrentPage(prev);
+      saveProgress(currentChapterIndex, prev);
     }
-    flipBookRef.current?.pageFlip().flipPrev();
   };
 
   useEffect(() => {
@@ -332,11 +339,6 @@ export default function Canvas({ bookId, content }: CanvasProps) {
       {/* Book Container */}
       <div 
         className="w-full h-full relative flex items-center justify-center touch-none"
-        onClickCapture={(e) => {
-          if ((e.target as HTMLElement).closest('.z-50')) return;
-          e.stopPropagation();
-          setShowUI(!showUI);
-        }}
       >
         
         <div className={clsx(
