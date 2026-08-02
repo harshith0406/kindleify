@@ -386,7 +386,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                     className="absolute inset-0 z-40 touch-none pointer-events-auto"
                     onTouchStart={onTouchStart}
                     onTouchMove={onTouchMove}
-                    onTouchEnd={(e) => {
+                    onTouchEnd={() => {
                       onTouchEndHandler();
                       // Clear touch state
                       setTouchStart(null);
