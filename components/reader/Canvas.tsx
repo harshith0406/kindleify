@@ -205,6 +205,32 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     };
   }, []);
 
+  const touchStartXRef = useRef<number | null>(null);
+
+  const handleBoundaryTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleBoundaryTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const diffX = touchStartXRef.current - e.changedTouches[0].clientX;
+    touchStartXRef.current = null;
+
+    const pagesPerView = isMobile ? 1 : 2;
+    // Next chapter: on last page(s), swipe left
+    if (currentPage >= maxPages - pagesPerView && diffX > 40) {
+      if (currentChapterIndex < totalChapters - 1) {
+        changeChapter(currentChapterIndex + 1);
+      }
+    }
+    // Prev chapter: on page 0, swipe right
+    else if (currentPage === 0 && diffX < -40) {
+      if (currentChapterIndex > 0) {
+        changeChapter(currentChapterIndex - 1);
+      }
+    }
+  };
+
   const pageWidth = isMobile ? containerWidth : containerWidth / 2;
 
   const pageStyles = {
@@ -397,13 +423,10 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       ref={flipBookRef}
                     >
                       {Array.from({ length: maxPages }).map((_, i) => {
-                        // VIRTUALIZATION HACK:
-                        // A full book chapter can be 150+ pages. If we duplicate the entire 
-                        // HTML text block for all 150 pages, the browser tries to render 
-                        // 1,000,000+ DOM nodes and silently crashes into a white screen!
-                        // By only rendering the text for the adjacent pages, we keep the DOM tiny 
-                        // and 60fps fast, while keeping the full 3D physics engine!
                         const isNear = Math.abs(currentPage - i) <= 3;
+                        const pagesPerView = isMobile ? 1 : 2;
+                        const isFirstPage = i === 0;
+                        const isLastPage = i >= maxPages - pagesPerView;
 
                         return (
                           <Page 
@@ -414,7 +437,11 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                               theme === "dark" && "bg-black"
                             )}
                           >
-                            <div className="w-full h-full overflow-hidden relative">
+                            <div 
+                              className="w-full h-full overflow-hidden relative"
+                              onTouchStart={isFirstPage || isLastPage ? handleBoundaryTouchStart : undefined}
+                              onTouchEnd={isFirstPage || isLastPage ? handleBoundaryTouchEnd : undefined}
+                            >
                               {isNear && (
                                 <div 
                                   className="h-full pt-16 pb-20 md:pt-20 md:pb-20 absolute top-0 bottom-0"
@@ -425,6 +452,18 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                                   }}
                                 >
                                   {textContent}
+                                </div>
+                              )}
+
+                              {/* Subtle End of Chapter indicator on the last page */}
+                              {isLastPage && (
+                                <div className="absolute bottom-12 inset-x-0 text-center pointer-events-auto">
+                                  <button 
+                                    onClick={() => currentChapterIndex < totalChapters - 1 && changeChapter(currentChapterIndex + 1)}
+                                    className="px-4 py-2 rounded-full bg-black/5 dark:bg-white/10 text-xs font-sans font-semibold backdrop-blur-md opacity-60 hover:opacity-100 transition-opacity text-black dark:text-white"
+                                  >
+                                    End of Chapter {currentChapterIndex + 1} &bull; Next Chapter &rarr;
+                                  </button>
                                 </div>
                               )}
                             </div>
