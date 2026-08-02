@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { List, Type, Loader2, X } from "lucide-react";
+import { List, Type, Loader2, X, Bookmark, BookmarkCheck, Trash2 } from "lucide-react";
 import clsx from "clsx";
 import HTMLFlipBook from "react-pageflip";
 
@@ -55,18 +55,42 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   const [tableOfContents, setTableOfContents] = useState<string[]>([]);
   const [hasLoadedProgress, setHasLoadedProgress] = useState(false);
 
-  // Load progress from localStorage
+  // Check URL parameters for restart flag
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("restart") === "true") {
+        try {
+          localStorage.removeItem(`bookmark-${bookId}`);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, [bookId]);
+
+  // Load progress and saved bookmarks from localStorage
   useEffect(() => {
     if (!bookId) return;
     try {
-      const saved = localStorage.getItem(`bookmark-${bookId}`);
-      if (saved) {
-        const { chapter, page } = JSON.parse(saved);
-        if (typeof chapter === 'number') setCurrentChapterIndex(chapter);
-        if (typeof page === 'number') setCurrentPage(page);
+      // Load progress
+      const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+      if (!params || params.get("restart") !== "true") {
+        const saved = localStorage.getItem(`bookmark-${bookId}`);
+        if (saved) {
+          const { chapter, page } = JSON.parse(saved);
+          if (typeof chapter === 'number') setCurrentChapterIndex(chapter);
+          if (typeof page === 'number') setCurrentPage(page);
+        }
+      }
+
+      // Load bookmarks list
+      const savedBookmarks = localStorage.getItem(`bookmarks_${bookId}`);
+      if (savedBookmarks) {
+        setBookmarks(JSON.parse(savedBookmarks));
       }
     } catch (e) {
-      console.error("Failed to load progress from localStorage", e);
+      console.error("Failed to load progress/bookmarks from localStorage", e);
     }
     setHasLoadedProgress(true);
   }, [bookId]);
@@ -150,6 +174,45 @@ export default function Canvas({ bookId, content }: CanvasProps) {
     } catch (e) {
       console.error('Failed to save bookmark to localStorage', e);
     }
+  };
+
+  const isCurrentPageBookmarked = bookmarks.some(
+    b => b.chapter === currentChapterIndex && b.page === currentPage
+  );
+
+  const toggleBookmark = () => {
+    if (!bookId) return;
+    let updated: typeof bookmarks;
+    if (isCurrentPageBookmarked) {
+      updated = bookmarks.filter(b => !(b.chapter === currentChapterIndex && b.page === currentPage));
+      showToast("Bookmark removed");
+    } else {
+      const chapterTitle = tableOfContents[currentChapterIndex] || `Chapter ${currentChapterIndex + 1}`;
+      updated = [...bookmarks, { chapter: currentChapterIndex, page: currentPage, timestamp: Date.now(), title: chapterTitle }];
+      showToast("Page bookmarked!");
+    }
+    setBookmarks(updated);
+    try {
+      localStorage.setItem(`bookmarks_${bookId}`, JSON.stringify(updated));
+    } catch (e) {
+      console.error("Failed to save bookmarks list", e);
+    }
+  };
+
+  const removeBookmark = (ch: number, pg: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const updated = bookmarks.filter(b => !(b.chapter === ch && b.page === pg));
+    setBookmarks(updated);
+    try {
+      localStorage.setItem(`bookmarks_${bookId}`, JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 2500);
   };
 
   const changeChapter = (newIndex: number) => {
@@ -285,38 +348,100 @@ export default function Canvas({ bookId, content }: CanvasProps) {
               className="fixed top-0 left-0 bottom-0 h-full max-h-full overflow-hidden w-[85vw] max-w-sm bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl z-[70] shadow-2xl flex flex-col font-sans border-r border-black/5 dark:border-white/10"
             >
               <div className="p-6 border-b border-black/5 dark:border-white/10 flex items-center justify-between mt-[env(safe-area-inset-top,0px)]">
-                <h2 className="text-xl font-bold text-black dark:text-white">Table of Contents</h2>
+                <div className="flex items-center gap-2 bg-black/5 dark:bg-white/10 p-1 rounded-xl shadow-inner">
+                  <button
+                    onClick={() => setTocTab("contents")}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all",
+                      tocTab === "contents" ? "bg-white dark:bg-[#2c2c2e] shadow-sm text-black dark:text-white" : "text-black/60 dark:text-white/60"
+                    )}
+                  >
+                    Contents
+                  </button>
+                  <button
+                    onClick={() => setTocTab("bookmarks")}
+                    className={clsx(
+                      "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5",
+                      tocTab === "bookmarks" ? "bg-white dark:bg-[#2c2c2e] shadow-sm text-black dark:text-white" : "text-black/60 dark:text-white/60"
+                    )}
+                  >
+                    <Bookmark className="w-3.5 h-3.5" />
+                    Bookmarks ({bookmarks.length})
+                  </button>
+                </div>
                 <button onClick={() => setShowTOC(false)} className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors">
                   <X className="w-5 h-5 text-black dark:text-white" />
                 </button>
               </div>
+
               <div 
                 className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 pb-[env(safe-area-inset-bottom,20px)]"
                 onTouchMove={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
                 onPointerMove={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
                 onWheel={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
               >
-                {tableOfContents.map((title, i) => (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (i !== currentChapterIndex) changeChapter(i);
-                      setShowTOC(false);
-                      setShowUI(false);
-                    }}
-                    className={clsx(
-                      "w-full text-left p-4 rounded-xl transition-all mb-2 flex items-center justify-between group",
-                      i === currentChapterIndex 
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold" 
-                        : "text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5"
-                    )}
-                  >
-                    <span className="truncate pr-4">{title}</span>
-                    {i === currentChapterIndex && (
-                      <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
-                    )}
-                  </button>
-                ))}
+                {tocTab === "contents" ? (
+                  tableOfContents.map((title, i) => (
+                    <button
+                      key={i}
+                      onClick={() => {
+                        if (i !== currentChapterIndex) changeChapter(i);
+                        setShowTOC(false);
+                        setShowUI(false);
+                      }}
+                      className={clsx(
+                        "w-full text-left p-4 rounded-xl transition-all mb-2 flex items-center justify-between group",
+                        i === currentChapterIndex 
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400 font-semibold" 
+                          : "text-black/70 dark:text-white/70 hover:bg-black/5 dark:hover:bg-white/5"
+                      )}
+                    >
+                      <span className="truncate pr-4">{title}</span>
+                      {i === currentChapterIndex && (
+                        <div className="w-2 h-2 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.8)]" />
+                      )}
+                    </button>
+                  ))
+                ) : (
+                  bookmarks.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-48 opacity-40 text-center space-y-2">
+                      <Bookmark className="w-8 h-8" />
+                      <p className="text-xs">No bookmarks saved yet.</p>
+                      <p className="text-[10px]">Tap the bookmark icon in the top header to save your favorite pages!</p>
+                    </div>
+                  ) : (
+                    bookmarks.map((bm, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => {
+                          if (bm.chapter !== currentChapterIndex) {
+                            changeChapter(bm.chapter);
+                          }
+                          setCurrentPage(bm.page);
+                          flipBookRef.current?.pageFlip().turnToPage(bm.page);
+                          setShowTOC(false);
+                          setShowUI(false);
+                        }}
+                        className="w-full text-left p-4 rounded-xl transition-all mb-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-between cursor-pointer group"
+                      >
+                        <div className="truncate pr-2">
+                          <h4 className="text-xs font-semibold text-black dark:text-white truncate">
+                            {bm.title || `Chapter ${bm.chapter + 1}`}
+                          </h4>
+                          <p className="text-[10px] text-purple-600 dark:text-purple-400 font-medium">
+                            Page {bm.page + 1}
+                          </p>
+                        </div>
+                        <button
+                          onClick={(e) => removeBookmark(bm.chapter, bm.page, e)}
+                          className="p-1.5 rounded-lg opacity-40 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 transition-all shrink-0"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))
+                  )
+                )}
               </div>
             </motion.div>
           </>
@@ -342,12 +467,28 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                   {tableOfContents[currentChapterIndex] || `Chapter ${currentChapterIndex + 1}`}
                 </p>
               </div>
-              <button 
-                onClick={() => window.location.href = '/dashboard'}
-                className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
-              >
-                <X className="w-5 h-5 text-black dark:text-white" />
-              </button>
+              <div className="flex items-center gap-2 shrink-0">
+                {/* Bookmark Toggle Button */}
+                <button 
+                  onClick={toggleBookmark}
+                  className={clsx(
+                    "w-10 h-10 rounded-full flex items-center justify-center transition-all shrink-0",
+                    isCurrentPageBookmarked 
+                      ? "bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 shadow-[0_0_12px_rgba(168,85,247,0.4)]" 
+                      : "bg-black/5 dark:bg-white/10 text-black dark:text-white hover:bg-black/10"
+                  )}
+                  title={isCurrentPageBookmarked ? "Remove Bookmark" : "Bookmark Page"}
+                >
+                  <Bookmark className={clsx("w-5 h-5", isCurrentPageBookmarked && "fill-purple-500")} />
+                </button>
+
+                <button 
+                  onClick={() => window.location.href = '/dashboard'}
+                  className="w-10 h-10 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center hover:bg-black/10 transition-colors shrink-0"
+                >
+                  <X className="w-5 h-5 text-black dark:text-white" />
+                </button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -576,6 +717,21 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                 </button>
               </div>
             </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast Notification */}
+      <AnimatePresence>
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-black/80 dark:bg-white/90 text-white dark:text-black px-4 py-2.5 rounded-full text-xs font-semibold backdrop-blur-md shadow-2xl flex items-center gap-2 font-sans border border-white/10 dark:border-black/10"
+          >
+            <BookmarkCheck className="w-4 h-4 text-purple-400 dark:text-purple-600" />
+            {toastMessage}
           </motion.div>
         )}
       </AnimatePresence>
