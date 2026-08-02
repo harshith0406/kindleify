@@ -264,7 +264,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                   <X className="w-5 h-5 text-black dark:text-white" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto p-4 pb-[env(safe-area-inset-bottom,20px)]">
+              <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 pb-[env(safe-area-inset-bottom,20px)]">
                 {tableOfContents.map((title, i) => (
                   <button
                     key={i}
@@ -444,7 +444,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
             {!isLoadingChapter && (
               <div className="absolute bottom-4 md:bottom-6 inset-x-6 md:inset-x-10 flex justify-between items-center opacity-30 text-[10px] tracking-wider font-sans pointer-events-none z-10">
                 <span>Ch. {currentChapterIndex + 1} of {totalChapters}</span>
-                <span>{Math.round((currentPage / Math.max(1, maxPages - 1)) * 100)}%</span>
+                <span>Chapter Progress: {Math.round((currentPage / Math.max(1, maxPages - 1)) * 100)}%</span>
               </div>
             )}
             
