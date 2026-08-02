@@ -33,6 +33,10 @@ export default function Canvas({ bookId, content }: CanvasProps) {
   
   const [showUI, setShowUI] = useState(true);
   const [showTOC, setShowTOC] = useState(false);
+  const [tocTab, setTocTab] = useState<"contents" | "bookmarks">("contents");
+  
+  const [bookmarks, setBookmarks] = useState<Array<{ chapter: number; page: number; timestamp: number; title?: string }>>([]);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
   
   const [isMobile, setIsMobile] = useState(true);
   const [mounted, setMounted] = useState(false);

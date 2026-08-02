@@ -43,6 +43,7 @@ export default function Dashboard() {
       }
     });
     setProgressMap(loadedMap);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleBookClick = (book: Book) => {
