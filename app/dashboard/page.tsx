@@ -51,24 +51,9 @@ export default function Dashboard() {
           >
             {[
               {
-                id: "the-silent-patient",
-                title: "The Silent Patient",
-                author: "Alex Michaelides",
-              },
-              {
-                id: "The Kind Worth Killing - Peter Swanson",
+                id: "The Kind Worth Killing",
                 title: "The Kind Worth Killing",
                 author: "Peter Swanson",
-              },
-              {
-                id: "vdoc.pub_the-day-of-the-jackal",
-                title: "The Day of the Jackal",
-                author: "Frederick Forsyth",
-              },
-              {
-                id: "vdoc.pub_the-girl-with-the-dragon-tattoo",
-                title: "The Girl with the Dragon Tattoo",
-                author: "Stieg Larsson",
               }
             ].map((book) => (
               <div 
