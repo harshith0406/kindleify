@@ -8,9 +8,68 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
   const { searchParams } = new URL(request.url);
   const chapterIndexStr = searchParams.get('index');
   const chapterIndex = parseInt(chapterIndexStr || '0', 10);
-  const bookId = params.bookId;
+  const bookId = decodeURIComponent(params.bookId);
 
   try {
+    // Check if a JSON version of the book exists
+    const bookPathJson = path.join(process.cwd(), 'public', `${bookId}.json`);
+    
+    if (fs.existsSync(bookPathJson)) {
+      const book = JSON.parse(fs.readFileSync(bookPathJson, 'utf-8'));
+      
+      const allChapters: any[] = [];
+      const toc: string[] = [];
+      
+      book.parts.forEach((part: any) => {
+          part.chapters.forEach((chap: any) => {
+              allChapters.push({
+                  partTitle: part.title,
+                  partSubtitle: part.subtitle,
+                  chapterTitle: chap.title,
+                  chapterSubtitle: chap.subtitle,
+                  paragraphs: chap.paragraphs
+              });
+              // Include parts in the UI as requested
+              toc.push(`${part.title}: ${chap.title} ${chap.subtitle ? '- ' + chap.subtitle : ''}`);
+          });
+      });
+
+      if (chapterIndex < 0 || chapterIndex >= allChapters.length) {
+         return NextResponse.json({ error: 'Chapter out of bounds' }, { status: 404 });
+      }
+
+      const chapter = allChapters[chapterIndex];
+      let idCounter = 1;
+      const contentNodes: { id: number; type: string; text: string }[] = [];
+      
+      // Add Chapter Title as header
+      contentNodes.push({
+          id: idCounter++,
+          type: 'h2',
+          text: chapter.chapterTitle
+      });
+
+      chapter.paragraphs.forEach((p: string) => {
+          contentNodes.push({
+              id: idCounter++,
+              type: 'p',
+              text: p
+          });
+      });
+
+      const responseData = {
+          title: book.title,
+          chapterTitle: `${chapter.partTitle} - ${chapter.chapterTitle}`,
+          totalChapters: allChapters.length,
+          currentChapterIndex: chapterIndex,
+          toc: toc,
+          content: contentNodes
+      };
+      
+      return NextResponse.json(responseData);
+    }
+
+    // Fallback to existing EPUB logic
     const bookPath = path.join(process.cwd(), 'public', 'books', `${bookId}.epub`);
     
     if (!fs.existsSync(bookPath)) {
@@ -118,6 +177,6 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
 
   } catch (error: unknown) {
     console.error("EPUB Parse Error:", error);
-    return NextResponse.json({ error: (error as Error).message || 'Failed to parse EPUB' }, { status: 500 });
+    return NextResponse.json({ error: (error as Error).message || 'Failed to parse EPUB or JSON' }, { status: 500 });
   }
 }
