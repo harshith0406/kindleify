@@ -381,6 +381,20 @@ export default function Canvas({ bookId, content }: CanvasProps) {
 
                 {/* REACT-PAGEFLIP 3D ENGINE */}
                 <div className="relative w-full h-full z-10 pointer-events-none">
+                  {/* INVISIBLE SWIPE OVERLAY - intercepts all touches to do simple kindle-style swipes without triggering 3D page drag */}
+                  <div 
+                    className="absolute inset-0 z-40 touch-none pointer-events-auto"
+                    onTouchStart={onTouchStart}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={(e) => {
+                      onTouchEndHandler();
+                      // Clear touch state
+                      setTouchStart(null);
+                      setTouchEnd(null);
+                    }}
+                    onClick={() => setShowUI(!showUI)}
+                  />
+
                   {maxPages > 0 && containerWidth > 0 && parentRef.current && (
                     /* @ts-expect-error - react-pageflip types require all props, but we rely on defaults */
                     <HTMLFlipBook
@@ -395,8 +409,8 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                       maxShadowOpacity={0.3}
                       showCover={false}
                       startPage={currentPage}
-                      mobileScrollSupport={false}
-                      useMouseEvents={false}
+                      mobileScrollSupport={true}
+                      useMouseEvents={true}
                       disableFlipByClick={true}
                       // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       onFlip={(e: any) => {
