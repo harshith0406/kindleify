@@ -144,7 +144,7 @@ export default function Canvas({ bookId, content }: CanvasProps) {
         hasJumpedToBookmark.current = true;
       }
     }
-  }, [maxPages]);
+  }, [maxPages, currentPage]);
 
   const saveProgress = (newChapter: number, newPage: number) => {
     if (!bookId) return;

@@ -1,8 +1,29 @@
 import { NextResponse } from 'next/server';
-import { EPub } from 'epub2';
-import { parse } from 'node-html-parser';
 import path from 'path';
 import fs from 'fs';
+
+interface Paragraph {
+  id: number;
+  type: string;
+  text: string;
+}
+
+interface ChapterData {
+  partTitle: string;
+  partSubtitle: string;
+  chapterTitle: string;
+  chapterSubtitle: string;
+  paragraphs: string[];
+}
+
+interface ParsedChapter {
+  title: string;
+  chapterTitle: string;
+  totalChapters: number;
+  currentChapterIndex: number;
+  toc: string[];
+  content: Paragraph[];
+}
 
 export async function GET(request: Request, { params }: { params: { bookId: string } }) {
   const { searchParams } = new URL(request.url);
@@ -11,172 +32,67 @@ export async function GET(request: Request, { params }: { params: { bookId: stri
   const bookId = decodeURIComponent(params.bookId);
 
   try {
-    // Check if a JSON version of the book exists
     const bookPathJson = path.join(process.cwd(), 'public', `${bookId}.json`);
     
-    if (fs.existsSync(bookPathJson)) {
-      const book = JSON.parse(fs.readFileSync(bookPathJson, 'utf-8'));
-      
-      const allChapters: any[] = [];
-      const toc: string[] = [];
-      
-      book.parts.forEach((part: any) => {
-          part.chapters.forEach((chap: any) => {
-              allChapters.push({
-                  partTitle: part.title,
-                  partSubtitle: part.subtitle,
-                  chapterTitle: chap.title,
-                  chapterSubtitle: chap.subtitle,
-                  paragraphs: chap.paragraphs
-              });
-              // Include parts in the UI as requested
-              toc.push(`${part.title}: ${chap.title} ${chap.subtitle ? '- ' + chap.subtitle : ''}`);
-          });
-      });
-
-      if (chapterIndex < 0 || chapterIndex >= allChapters.length) {
-         return NextResponse.json({ error: 'Chapter out of bounds' }, { status: 404 });
-      }
-
-      const chapter = allChapters[chapterIndex];
-      let idCounter = 1;
-      const contentNodes: { id: number; type: string; text: string }[] = [];
-      
-      // Add Chapter Title as header
-      contentNodes.push({
-          id: idCounter++,
-          type: 'h2',
-          text: chapter.chapterTitle
-      });
-
-      chapter.paragraphs.forEach((p: string) => {
-          contentNodes.push({
-              id: idCounter++,
-              type: 'p',
-              text: p
-          });
-      });
-
-      const responseData = {
-          title: book.title,
-          chapterTitle: `${chapter.partTitle} - ${chapter.chapterTitle}`,
-          totalChapters: allChapters.length,
-          currentChapterIndex: chapterIndex,
-          toc: toc,
-          content: contentNodes
-      };
-      
-      return NextResponse.json(responseData);
-    }
-
-    // Fallback to existing EPUB logic
-    const bookPath = path.join(process.cwd(), 'public', 'books', `${bookId}.epub`);
-    
-    if (!fs.existsSync(bookPath)) {
+    if (!fs.existsSync(bookPathJson)) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
-    const cacheDir = process.env.VERCEL ? '/tmp' : path.join(process.cwd(), 'public');
-    const cachePath = path.join(cacheDir, `kindleify-cache-${bookId}-${chapterIndex}.json`);
-
-    if (fs.existsSync(cachePath)) {
-      const cachedData = JSON.parse(fs.readFileSync(cachePath, 'utf-8'));
-      return NextResponse.json(cachedData);
-    }
-
-    const epub = await EPub.createAsync(bookPath);
+    const book = JSON.parse(fs.readFileSync(bookPathJson, 'utf-8'));
     
-    const chapters = epub.flow;
-    if (chapterIndex < 0 || chapterIndex >= chapters.length) {
-      return NextResponse.json({ error: 'Chapter out of bounds' }, { status: 404 });
-    }
-
-    const chapterId = chapters[chapterIndex].id;
-    const html = await epub.getChapterRawAsync(chapterId);
-
-    // Use fast, Next-compatible node-html-parser
-    const root = parse(html);
+    const allChapters: ChapterData[] = [];
+    const toc: string[] = [];
     
-    // We look for all paragraph-like tags
-    const elements = root.querySelectorAll('p, h1, h2, h3, div');
-    
-    let contentNodes: { id: number; type: string; text: string }[] = [];
-    let idCounter = 1;
-    let lastNode: { id: number; type: string; text: string } | null = null;
-
-    elements.forEach((el) => {
-      // Filter out empty elements or pure structural divs
-      const textRaw = el.textContent?.trim();
-      if (!textRaw || textRaw.length === 0) return;
-      
-      // If a div just contains a p, the p will be caught separately
-      if (el.tagName.toLowerCase() === 'div' && el.querySelector('p')) return;
-
-      // Use innerHTML to preserve italics and bold tags
-      const htmlContent = el.innerHTML || '';
-      
-      // Clean up the HTML (remove excessive whitespace)
-      const cleanHtml = htmlContent.replace(/\s+/g, ' ').trim();
-      
-      // Detect if this EPUB was generated by pdftohtml (which shreds sentences)
-      const isPdfToHtml = html.includes('pdftohtml');
-
-      // Heuristic: If it's a broken pdftohtml book AND the last node doesn't end with sentence-ending punctuation, stitch it.
-      if (isPdfToHtml && lastNode && !lastNode.text.match(/[.?!…”"'](<\/[^>]+>)?$/)) {
-        lastNode.text += ' ' + cleanHtml;
-      } else {
-        const newNode = {
-          id: idCounter++,
-          type: el.tagName.toLowerCase(),
-          text: cleanHtml
-        };
-        contentNodes.push(newNode);
-        lastNode = newNode;
-      }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    book.parts.forEach((part: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        part.chapters.forEach((chap: any) => {
+            allChapters.push({
+                partTitle: part.title,
+                partSubtitle: part.subtitle,
+                chapterTitle: chap.title,
+                chapterSubtitle: chap.subtitle,
+                paragraphs: chap.paragraphs
+            });
+            toc.push(`${part.title}: ${chap.title} ${chap.subtitle ? '- ' + chap.subtitle : ''}`);
+        });
     });
 
-    // If no nodes found, fallback to body text
-    if (contentNodes.length === 0) {
-      const body = root.querySelector('body');
-      const bodyText = body ? body.textContent?.trim() : root.textContent?.trim();
-      if (bodyText) {
-        contentNodes = bodyText.split('\n').filter(t => t.trim().length > 0).map((t, i) => ({
-          id: i,
-          type: 'p',
-          text: t.replace(/\s+/g, ' ').trim()
-        }));
-      }
+    if (chapterIndex < 0 || chapterIndex >= allChapters.length) {
+       return NextResponse.json({ error: 'Chapter out of bounds' }, { status: 404 });
     }
 
-    // Final fallback for completely empty chapters (e.g., Cover Images)
-    if (contentNodes.length === 0) {
-      contentNodes.push({
-        id: 1,
-        type: 'p',
-        text: '[Illustration or Cover Page]'
-      });
-    }
+    const chapter = allChapters[chapterIndex];
+    let idCounter = 1;
+    const contentNodes: Paragraph[] = [];
+    
+    contentNodes.push({
+        id: idCounter++,
+        type: 'h2',
+        text: chapter.chapterTitle
+    });
 
-    const responseData = {
-      title: epub.metadata.title,
-      chapterTitle: chapters[chapterIndex].title || `Chapter ${chapterIndex + 1}`,
-      totalChapters: chapters.length,
-      currentChapterIndex: chapterIndex,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      toc: chapters.map((c: any, i: number) => c.title || `Chapter ${i + 1}`),
-      content: contentNodes
+    chapter.paragraphs.forEach((p: string) => {
+        contentNodes.push({
+            id: idCounter++,
+            type: 'p',
+            text: p
+        });
+    });
+
+    const responseData: ParsedChapter = {
+        title: book.title,
+        chapterTitle: `${chapter.partTitle} - ${chapter.chapterTitle}`,
+        totalChapters: allChapters.length,
+        currentChapterIndex: chapterIndex,
+        toc: toc,
+        content: contentNodes
     };
-
-    try {
-      fs.writeFileSync(cachePath, JSON.stringify(responseData));
-    } catch (cacheErr) {
-      console.warn("Failed to write to cache:", cacheErr);
-    }
-
+    
     return NextResponse.json(responseData);
 
   } catch (error: unknown) {
-    console.error("EPUB Parse Error:", error);
-    return NextResponse.json({ error: (error as Error).message || 'Failed to parse EPUB or JSON' }, { status: 500 });
+    console.error("Book Parse Error:", error);
+    return NextResponse.json({ error: (error as Error).message || 'Failed to parse JSON book' }, { status: 500 });
   }
 }
