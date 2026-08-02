@@ -264,7 +264,12 @@ export default function Canvas({ bookId, content }: CanvasProps) {
                   <X className="w-5 h-5 text-black dark:text-white" />
                 </button>
               </div>
-              <div className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 pb-[env(safe-area-inset-bottom,20px)]">
+              <div 
+                className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 pb-[env(safe-area-inset-bottom,20px)]"
+                onTouchMove={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
+                onPointerMove={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
+                onWheel={(e) => { e.stopPropagation(); e.nativeEvent.stopPropagation(); e.nativeEvent.stopImmediatePropagation(); }}
+              >
                 {tableOfContents.map((title, i) => (
                   <button
                     key={i}
