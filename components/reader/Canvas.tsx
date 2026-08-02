@@ -249,14 +249,14 @@ export default function Canvas({ bookId, content }: CanvasProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowTOC(false)}
-              className="absolute inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
             />
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute top-0 left-0 bottom-0 w-[85vw] max-w-sm bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl z-[70] shadow-2xl flex flex-col font-sans border-r border-black/5 dark:border-white/10"
+              className="fixed top-0 left-0 bottom-0 h-full max-h-full overflow-hidden w-[85vw] max-w-sm bg-white/95 dark:bg-[#1c1c1e]/95 backdrop-blur-2xl z-[70] shadow-2xl flex flex-col font-sans border-r border-black/5 dark:border-white/10"
             >
               <div className="p-6 border-b border-black/5 dark:border-white/10 flex items-center justify-between mt-[env(safe-area-inset-top,0px)]">
                 <h2 className="text-xl font-bold text-black dark:text-white">Table of Contents</h2>
